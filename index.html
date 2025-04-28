@@ -1,123 +1,113 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>WebGIS Q2 midterm2 of student - 2106080079</title>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <!-- Link Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-    
-    <style>
-        #map { 
-            height: 90vh; 
-            width: 100%;
-        }
-        .legend {
-            background: white;
-            padding: 10px;
-            line-height: 18px;
-            color: #555;
-        }
-        .legend i {
-            width: 18px;
-            height: 18px;
-            float: left;
-            margin-right: 8px;
-            opacity: 0.7;
-        }
-        .title {
-            text-align: center;
-            font-size: 20px;
-            font-weight: bold;
-            margin: 10px;
-        }
-    </style>
+  <title>WebGIS Q2 midterm2 of student - 2106080079</title>
+  <meta charset="utf-8" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 </head>
 <body>
 
-<div class="title">
-    WebGIS Q2 midterm2 of student - 2106080079. Study area: Đông Hưng, Thái Bình.
-</div>
-
-<div id="map"></div>
-
-<!-- Link Leaflet JS -->
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<div id="map" style="width: 100%; height: 100vh;"></div>
 
 <script>
-// Khởi tạo map
+// Tạo bản đồ nền
 var map = L.map('map').setView([20.5, 106.4], 11);
-
-// Layer nền OSM
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap contributors'
+  attribution: '© OpenStreetMap'
 }).addTo(map);
 
-// Hàm chọn màu theo mật độ dân số
-function getColor(d) {
-    return d > 2467 ? '#bd0026' :
-           d > 1751 ? '#f03b20' :
-           d > 1325 ? '#fd8d3c' :
-           d > 934  ? '#feb24c' :
-           d > 573  ? '#ffeda0' :
-                      '#ffffff';
+// Hàm chọn màu theo population_density
+function getColor(density) {
+  return density > 2500 ? '#800026' :
+         density > 2000 ? '#BD0026' :
+         density > 1500 ? '#E31A1C' :
+         density > 1000 ? '#FC4E2A' :
+         density > 500  ? '#FD8D3C' :
+         density > 200  ? '#FEB24C' :
+         density > 0    ? '#FED976' :
+                          '#FFEDA0';
 }
 
-// Hàm style cho các xã
+// Hàm style layer
 function style(feature) {
-    return {
-        fillColor: getColor(feature.properties.population_density),
-        weight: 2,
-        opacity: 1,
-        color: 'white',
-        dashArray: '3',
-        fillOpacity: 0.7
-    };
+  return {
+    fillColor: getColor(feature.properties.population_density),
+    weight: 1,
+    opacity: 1,
+    color: 'white',
+    fillOpacity: 0.7
+  };
 }
 
-// Thêm file GeoJSON
-fetch('Dong_Hung_district.geojson')
-    .then(response => response.json())
-    .then(data => {
-        L.geoJson(data, {
-            style: style,
-            onEachFeature: function (feature, layer) {
-                // Popup
-                layer.bindPopup("<strong>" + feature.properties.VARNAME_3 + "</strong><br>Mật độ dân số: " + feature.properties.population_density + " người/km²");
-                // Label tên xã
-                layer.bindTooltip(feature.properties.VARNAME_3, {permanent: true, direction: 'center', className: 'label'});
-            }
-        }).addTo(map);
-    });
+// Load file GeoJSON
+fetch('Dong Hung population density.geojson')
+  .then(res => res.json())
+  .then(data => {
+    L.geoJson(data, {
+      style: style,
+      onEachFeature: function (feature, layer) {
+        layer.bindTooltip(feature.properties.NAME_3, {
+          permanent: true,
+          direction: 'center',
+          className: 'label'
+        });
+      }
+    }).addTo(map);
+  });
 
-// Legend
+// Thêm Legend
 var legend = L.control({position: 'topright'});
 
 legend.onAdd = function (map) {
-    var div = L.DomUtil.create('div', 'legend'),
-        grades = [573, 934, 1325, 1751, 2467],
-        labels = [],
-        from, to;
+  var div = L.DomUtil.create('div', 'info legend'),
+    grades = [0, 200, 500, 1000, 1500, 2000, 2500],
+    labels = [];
 
-    div.innerHTML += '<b>Mật độ dân số<br>(người/km²)</b><br>'
+  div.innerHTML += "<strong>Population density<br>(people/km²)</strong><br>";
 
-    for (var i = 0; i < grades.length; i++) {
-        from = grades[i];
-        to = grades[i + 1];
+  for (var i = 0; i < grades.length; i++) {
+    div.innerHTML +=
+      '<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
+      grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
+  }
 
-        labels.push(
-            '<i style="background:' + getColor(from + 1) + '"></i> ' +
-            from + (to ? '&ndash;' + to : '+'));
-    }
-
-    div.innerHTML += labels.join('<br>');
-    return div;
+  return div;
 };
 
 legend.addTo(map);
 
+// Thêm Title
+var title = L.control({position: 'topcenter'});
+
+title.onAdd = function (map) {
+  var div = L.DomUtil.create('div', 'title');
+  div.innerHTML = "<h3>WebGIS Q2 midterm2 of student - 2106080079<br>Study area: Đông Hưng, Thái Bình</h3>";
+  return div;
+};
+
+title.addTo(map);
+
 </script>
+
+<style>
+/* Style chữ label xã */
+.label {
+  font-size: 12px;
+  font-weight: bold;
+  color: black;
+  text-shadow: 1px 1px white;
+}
+
+/* Style Title */
+.title {
+  background: white;
+  padding: 6px;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: bold;
+}
+</style>
 
 </body>
 </html>
