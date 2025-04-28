@@ -1,19 +1,38 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>WebGIS Q2 midterm2 of student - 2106080079</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <title>WebGIS Q2 midterm2 of student - 2106080079. Study area: Đông Hưng, Thái Bình</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+
     <style>
-        #map {
-            width: 100%;
-            height: 100vh;
+        body { margin:0; padding:0; }
+        #map { height: 100vh; }
+        .title {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 18px;
+            z-index: 1000;
         }
         .legend {
+            position: absolute;
+            top: 50px;
+            right: 10px;
             background: white;
             padding: 10px;
+            font-size: 14px;
             line-height: 18px;
             color: #555;
+            border-radius: 5px;
         }
         .legend i {
             width: 18px;
@@ -22,94 +41,81 @@
             margin-right: 8px;
             opacity: 0.7;
         }
-        .labelstyle {
-            font-weight: bold;
-            font-size: 12px;
-            color: black;
-            text-shadow: 1px 1px 2px white;
-        }
-        h1 {
-            text-align: center;
-            margin: 10px;
-            font-size: 22px;
-        }
     </style>
 </head>
+
 <body>
+    <div class="title">WebGIS Q2 midterm2 of student - 2106080079<br>Study area: Đông Hưng, Thái Bình</div>
+    <div id="map"></div>
 
-<h1>WebGIS Q2 midterm2 of student - 2106080079<br>Study area: Đông Hưng, Thái Bình</h1>
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
 
-<div id="map"></div>
+    <script>
+        // Create Map
+        var map = L.map('map').setView([20.5333, 106.35], 12); // Đông Hưng tọa độ trung bình
 
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+        // Add OSM basemap
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
 
-<script>
-    // Tạo bản đồ
-    var map = L.map('map').setView([20.5706, 106.3960], 12);
-
-    // Thêm nền OSM
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        maxZoom: 19,
-        attribution: '© OpenStreetMap'
-    }).addTo(map);
-
-    // Hàm style cho lớp xã (theo mật độ dân số)
-    function getColor(d) {
-        return d > 1000 ? '#800026' :
-               d > 800  ? '#BD0026' :
-               d > 600  ? '#E31A1C' :
-               d > 400  ? '#FC4E2A' :
-               d > 200  ? '#FD8D3C' :
-                          '#FEB24C';
-    }
-
-    function style(feature) {
-        return {
-            fillColor: getColor(feature.properties.pop_density),
-            weight: 1,
-            opacity: 1,
-            color: 'white',
-            dashArray: '3',
-            fillOpacity: 0.7
-        };
-    }
-
-    // Load file GeoJSON xã Đông Hưng
-    fetch('donghung.geojson')
-      .then(response => response.json())
-      .then(data => {
-          L.geoJSON(data, {
-              style: style,
-              onEachFeature: function (feature, layer) {
-                  layer.bindPopup('<b>' + feature.properties.VARNAME_3 + '</b><br>Dân số: ' + feature.properties.pop_density);
-                  layer.bindTooltip(feature.properties.VARNAME_3, {
-                      permanent: true,
-                      direction: 'center',
-                      className: 'labelstyle'
-                  });
-              }
-          }).addTo(map);
-      });
-
-    // Thêm chú giải
-    var legend = L.control({position: 'topright'});
-
-    legend.onAdd = function (map) {
-        var div = L.DomUtil.create('div', 'legend'),
-            grades = [0, 200, 400, 600, 800, 1000],
-            labels = [];
-
-        div.innerHTML = '<b>Mật độ dân số</b><br>';
-        for (var i = 0; i < grades.length; i++) {
-            div.innerHTML +=
-                '<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
-                grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
+        // Function color based on population_density
+        function getColor(d) {
+            return d > 2500 ? '#800026' :
+                   d > 2000 ? '#BD0026' :
+                   d > 1500 ? '#E31A1C' :
+                   d > 1000 ? '#FC4E2A' :
+                   d > 500  ? '#FD8D3C' :
+                   d > 200  ? '#FEB24C' :
+                   d > 0    ? '#FED976' :
+                              '#FFEDA0';
         }
-        return div;
-    };
 
-    legend.addTo(map);
-</script>
+        function style(feature) {
+            return {
+                fillColor: getColor(feature.properties.population_density),
+                weight: 1,
+                opacity: 1,
+                color: 'white',
+                dashArray: '3',
+                fillOpacity: 0.7
+            };
+        }
 
+        // Load GeoJSON layer
+        fetch('Dong Hung_district.geojson')
+            .then(res => res.json())
+            .then(data => {
+                L.geoJson(data, {
+                    style: style,
+                    onEachFeature: function (feature, layer) {
+                        // Bind popup + label
+                        layer.bindPopup('<b>' + (feature.properties.VARNAME_3 || "No name") + '</b><br/>Population density: ' + feature.properties.population_density + ' people/km²');
+                        layer.bindTooltip(feature.properties.VARNAME_3, {permanent: true, direction: "center", className: "label-style"});
+                    }
+                }).addTo(map);
+            });
+
+        // Add Legend
+        var legend = L.control({position: 'topright'});
+
+        legend.onAdd = function (map) {
+            var div = L.DomUtil.create('div', 'legend'),
+                grades = [0, 200, 500, 1000, 1500, 2000, 2500],
+                labels = [];
+
+            div.innerHTML += '<b>Population density<br>(people/km²)</b><br>';
+
+            for (var i = 0; i < grades.length; i++) {
+                div.innerHTML +=
+                    '<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
+                    grades[i] + (grades[i + 1] ? '&ndash;' + grades[i + 1] + '<br>' : '+');
+            }
+            return div;
+        };
+
+        legend.addTo(map);
+    </script>
 </body>
 </html>
